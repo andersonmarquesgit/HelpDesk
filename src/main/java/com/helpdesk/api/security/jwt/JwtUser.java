@@ -7,6 +7,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * Spring Security depende de um usuário que implemente {@link UserDetails}, pois é através desses dados que ele controla quem está autenticado no sistema.
+ * @author anderson.marques
+ *
+ */
 public class JwtUser implements UserDetails {
 
 	

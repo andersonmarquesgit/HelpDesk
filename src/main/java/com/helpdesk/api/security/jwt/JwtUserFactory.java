@@ -9,6 +9,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import com.helpdesk.api.entity.User;
 import com.helpdesk.api.enums.ProfileEnum;
 
+/**
+ * Classe responsável pela conversão de {@link User}, nosso usuário, no usuário que o Spring Security conhece {@link JwtUser}
+ * @author anderson.marques
+ *
+ */
 public class JwtUserFactory {
 
 	public JwtUserFactory() {
