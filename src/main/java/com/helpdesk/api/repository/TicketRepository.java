@@ -29,4 +29,6 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
 			String priority);
 	
 	Page<Ticket> findByNumber(Integer number, Pageable pages);
+	
+	Ticket findOneById(String id);
 }
