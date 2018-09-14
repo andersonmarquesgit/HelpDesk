@@ -11,9 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,7 +67,7 @@ public class UserController {
 		}
 	}
 	
-	@PostMapping
+	@PutMapping
 	@PreAuthorize("hasAnyRole('ADMIN')")//Autorização com base no perfil. Nesse caso apenas ADMIN podem atualizar usuários.
 	public ResponseEntity<Response<User>> update(HttpServletRequest request, @RequestBody User user, 
 			BindingResult result) {
@@ -110,7 +112,7 @@ public class UserController {
 		return ResponseEntity.ok(response);
 	}
 	
-	@GetMapping(value = "{id}")
+	@DeleteMapping(value = "{id}")
 	@PreAuthorize("hasAnyRole('ADMIN')")//Autorização com base no perfil. Nesse caso apenas ADMIN podem consultar usuários.
 	public ResponseEntity<Response<String>> delete(@PathVariable String id) {
 		Response<String> response = new Response<String>();
