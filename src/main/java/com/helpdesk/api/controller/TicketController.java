@@ -12,6 +12,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,7 +41,7 @@ public class TicketController {
 	
 	@PostMapping
 	@PreAuthorize("hasAnyRole('CUSTOMER')")
-	public ResponseEntity<?> createOrUpdate(HttpServletRequest request, @RequestBody Ticket ticket, BindingResult result) {
+	public ResponseEntity<?> create(HttpServletRequest request, @RequestBody Ticket ticket, BindingResult result) {
 		Response<Ticket> response = new Response<Ticket>();
 		
 		try {
@@ -64,6 +65,36 @@ public class TicketController {
 		return ResponseEntity.ok(response);
 	}
 	
+	@PutMapping
+	@PreAuthorize("hasAnyRole('CUSTOMER')")
+	public ResponseEntity<?> update(HttpServletRequest request, @RequestBody Ticket ticket, BindingResult result) {
+		Response<Ticket> response = new Response<Ticket>();
+		try {
+			validateUpdateTicket(ticket, result);
+			if (result.hasErrors()) {
+				result.getAllErrors().forEach(error -> response.getErrors().add(error.getDefaultMessage()));
+				return ResponseEntity.badRequest().body(response);
+			}
+			
+			Ticket ticketCurrent = this.ticketService.findById(ticket.getId());
+			ticket.setStatus(ticketCurrent.getStatus());
+			ticket.setUser(ticketCurrent.getUser());
+			ticket.setDate(ticketCurrent.getDate());
+			ticket.setNumber(ticketCurrent.getNumber());
+			if (ticketCurrent.getAssigneUser() != null) {
+				ticket.setAssigneUser(ticketCurrent.getAssigneUser());
+			}
+			
+			Ticket ticketPersisted = this.ticketService.createOrUpdate(ticket);
+			response.setData(ticketPersisted);
+		} catch (Exception e) {
+			response.getErrors().add(e.getMessage());
+			return ResponseEntity.badRequest().body(response);
+		}
+		
+		return ResponseEntity.ok(response);
+	}
+	
 	private Integer generateNumber() {
 		Random random = new Random();
 		return random.nextInt(9999);
@@ -76,6 +107,15 @@ public class TicketController {
 	}
 
 	private void validateCreateTicket(Ticket ticket, BindingResult result) {
+		if(ticket.getTitle() == null) {
+			result.addError(new ObjectError("Ticket", "Title no information"));
+		}
+	}
+	
+	private void validateUpdateTicket(Ticket ticket, BindingResult result) {
+		if(ticket.getId() == null) {
+			result.addError(new ObjectError("Ticket", "Idno information"));
+		}
 		if(ticket.getTitle() == null) {
 			result.addError(new ObjectError("Ticket", "Title no information"));
 		}
