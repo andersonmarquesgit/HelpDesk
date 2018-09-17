@@ -1,6 +1,9 @@
 package com.helpdesk.api.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.helpdesk.api.entity.ChangeStatus;
 import com.helpdesk.api.entity.Ticket;
 import com.helpdesk.api.entity.User;
 import com.helpdesk.api.enums.StatusEnum;
@@ -107,6 +111,17 @@ public class TicketController {
 			response.getErrors().add("Register not found Id: " + id);
 			return ResponseEntity.badRequest().body(response);
 		}
+		
+		List<ChangeStatus> changes = new ArrayList<>();
+		Iterable<ChangeStatus> changesCurrent = this.ticketService.listChangeStatus(id);
+		for (Iterator<ChangeStatus> iterator = changesCurrent.iterator(); iterator.hasNext();) {
+			ChangeStatus changeStatus = (ChangeStatus) iterator.next();
+			changeStatus.setTicket(null);
+			changes.add(changeStatus);
+		}
+		
+		ticket.setChanges(changes);
+		response.setData(ticket);
 		
 		return ResponseEntity.ok(response);
 	}
