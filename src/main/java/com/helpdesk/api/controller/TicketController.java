@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -89,6 +91,20 @@ public class TicketController {
 			response.setData(ticketPersisted);
 		} catch (Exception e) {
 			response.getErrors().add(e.getMessage());
+			return ResponseEntity.badRequest().body(response);
+		}
+		
+		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping(value = "{id}")
+	@PreAuthorize("hasAnyRole('CUSTOMER', 'TECHNICIAN')")
+	public ResponseEntity<?> findById(@PathVariable("id") String id) {
+		Response<Ticket> response = new Response<Ticket>();
+		Ticket ticket = this.ticketService.findById(id);
+		
+		if(ticket == null) {
+			response.getErrors().add("Register not found Id: " + id);
 			return ResponseEntity.badRequest().body(response);
 		}
 		
