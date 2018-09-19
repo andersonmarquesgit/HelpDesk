@@ -9,11 +9,13 @@ import java.util.Random;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.helpdesk.api.entity.ChangeStatus;
 import com.helpdesk.api.entity.Ticket;
 import com.helpdesk.api.entity.User;
+import com.helpdesk.api.enums.ProfileEnum;
 import com.helpdesk.api.enums.StatusEnum;
 import com.helpdesk.api.response.Response;
 import com.helpdesk.api.security.jwt.JwtTokenUtil;
@@ -113,7 +116,7 @@ public class TicketController {
 		}
 		
 		List<ChangeStatus> changes = new ArrayList<>();
-		Iterable<ChangeStatus> changesCurrent = this.ticketService.listChangeStatus(id);
+		Iterable<ChangeStatus> changesCurrent = this.ticketService.listChangeStatus(ticket.getId());
 		for (Iterator<ChangeStatus> iterator = changesCurrent.iterator(); iterator.hasNext();) {
 			ChangeStatus changeStatus = (ChangeStatus) iterator.next();
 			changeStatus.setTicket(null);
@@ -123,6 +126,38 @@ public class TicketController {
 		ticket.setChanges(changes);
 		response.setData(ticket);
 		
+		return ResponseEntity.ok(response);
+	}
+	
+	@DeleteMapping(value = "{id}")
+	@PreAuthorize("hasAnyRole('CUSTOMER')")
+	public ResponseEntity<?> delete(@PathVariable("id") String id) {
+		Response<String> response = new Response<String>();
+		Ticket ticket = this.ticketService.findById(id);
+		
+		if(ticket == null) {
+			response.getErrors().add("Register not found Id: " + id);
+			return ResponseEntity.badRequest().body(response);
+		}
+		
+		this.ticketService.delete(ticket);
+		return ResponseEntity.ok(new Response<String>());
+	}
+	
+	@GetMapping(value = "{page}/{count}")
+	@PreAuthorize("hasAnyRole('CUSTOMER', 'TECHNICIAN')")
+	public ResponseEntity<Response<Page<Ticket>>> findAll(HttpServletRequest request, @PathVariable("page") int page, @PathVariable("count") int count) {
+		Response<Page<Ticket>> response = new Response<Page<Ticket>>();
+		Page<Ticket> tickets = null;
+		
+		User userRequest = userFromRequest(request);
+		if (userRequest.getProfile().equals(ProfileEnum.ROLE_TECHNICIAN)) {
+			tickets = this.ticketService.listTicket(page, count);
+		} else if (userRequest.getProfile().equals(ProfileEnum.ROLE_ADMIN)) {
+			tickets = this.ticketService.findByCurrentUser(page, count, userRequest.getId());
+		} 
+		
+		response.setData(tickets);
 		return ResponseEntity.ok(response);
 	}
 	
