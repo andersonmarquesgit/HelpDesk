@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.helpdesk.api.dto.Summary;
 import com.helpdesk.api.entity.ChangeStatus;
 import com.helpdesk.api.entity.Ticket;
 import com.helpdesk.api.entity.User;
@@ -221,9 +222,14 @@ public class TicketController {
 				ticketCurrent.setAssigneUser(userFromRequest(request));
 			}
 			
+			Ticket ticketPersisted = this.ticketService.createOrUpdate(ticketCurrent);
 			ChangeStatus changeStatus = new ChangeStatus();
 			changeStatus.setUserChange(userFromRequest(request));
-			Ticket ticketPersisted = this.ticketService.createOrUpdate(ticketCurrent);
+			changeStatus.setDateChange(new Date());
+			changeStatus.setStatus(StatusEnum.getStatus(status));
+			changeStatus.setTicket(ticketPersisted);
+			
+			this.ticketService.createChangeStatus(changeStatus);
 			response.setData(ticketPersisted);
 		} catch (Exception e) {
 			response.getErrors().add(e.getMessage());
@@ -233,7 +239,52 @@ public class TicketController {
 		return ResponseEntity.ok(response);
 	}
 	
-	
+	@GetMapping(value = "/sumary")
+	public ResponseEntity<Response<Summary>> findSumary() {
+		Response<Summary> response = new Response<Summary>();
+		Summary summary = new Summary();
+		int amountNew = 0;
+		int amountResolved = 0;
+		int amountApproved = 0;
+		int amountDisapproved = 0;
+		int amountAssigned = 0;
+		int amountClosed = 0;
+		
+		Iterable<Ticket> tickets = this.ticketService.findAll();
+		if (tickets != null) {
+			for (Iterator<Ticket> iterator = tickets.iterator(); iterator.hasNext();) {
+				Ticket ticket = iterator.next();
+				if (ticket.getStatus().equals(StatusEnum.New)) {
+					amountNew++;
+				}
+				if (ticket.getStatus().equals(StatusEnum.Resolved)) {
+					amountResolved++;
+				}
+				if (ticket.getStatus().equals(StatusEnum.Approved)) {
+					amountApproved++;
+				}
+				if (ticket.getStatus().equals(StatusEnum.Disaproved)) {
+					amountDisapproved++;
+				}
+				if (ticket.getStatus().equals(StatusEnum.Assigned)) {
+					amountAssigned++;
+				}
+				if (ticket.getStatus().equals(StatusEnum.Closed)) {
+					amountClosed++;
+				}
+			}
+		}
+		
+		summary.setAmountNew(amountNew);
+		summary.setAmountResolved(amountResolved);
+		summary.setAmountApproved(amountApproved);
+		summary.setAmountDisapproved(amountDisapproved);
+		summary.setAmountAssigned(amountAssigned);
+		summary.setAmountClosed(amountClosed);
+		response.setData(summary);
+		return ResponseEntity.ok(response);
+	}
+
 	private Integer generateNumber() {
 		Random random = new Random();
 		return random.nextInt(9999);
