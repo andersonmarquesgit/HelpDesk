@@ -198,6 +198,42 @@ public class TicketController {
 		return ResponseEntity.ok(response);
 	}
 	
+	@PutMapping(value = "{id}/{status}")
+	@PreAuthorize("hasAnyRole('CUSTOMER', 'TECHNICIAN')")
+	public ResponseEntity<Response<Ticket>> changeStatus(
+			HttpServletRequest request, 
+			@PathVariable("id") String id, 
+			@PathVariable("status") String status,
+			@RequestBody Ticket ticket,
+			BindingResult result) {
+		
+		Response<Ticket> response = new Response<Ticket>();
+		try {
+			this.validateChangeStatusTicket(id, status, result);
+			if(result.hasErrors()) {
+				result.getAllErrors().forEach(error -> response.getErrors().add(error.getDefaultMessage()));
+				return ResponseEntity.badRequest().body(response);
+			} 
+			Ticket ticketCurrent = this.ticketService.findById(id);
+			ticketCurrent.setStatus(StatusEnum.getStatus(status));
+			
+			if (status.equals("Assigned")) {
+				ticketCurrent.setAssigneUser(userFromRequest(request));
+			}
+			
+			ChangeStatus changeStatus = new ChangeStatus();
+			changeStatus.setUserChange(userFromRequest(request));
+			Ticket ticketPersisted = this.ticketService.createOrUpdate(ticketCurrent);
+			response.setData(ticketPersisted);
+		} catch (Exception e) {
+			response.getErrors().add(e.getMessage());
+			return ResponseEntity.badRequest().body(response);
+		}
+		
+		return ResponseEntity.ok(response);
+	}
+	
+	
 	private Integer generateNumber() {
 		Random random = new Random();
 		return random.nextInt(9999);
@@ -221,6 +257,17 @@ public class TicketController {
 		}
 		if(ticket.getTitle() == null) {
 			result.addError(new ObjectError("Ticket", "Title no information"));
+		}
+	}
+	
+	private void validateChangeStatusTicket(String id, String status, BindingResult result) {
+		if(id == null || id.equals("")) {
+			result.addError(new ObjectError("Ticket", "Id no information"));
+			return;
+		}
+		if(status == null || status.equals("")) {
+			result.addError(new ObjectError("Ticket", "Status no information"));
+			return;
 		}
 	}
 
