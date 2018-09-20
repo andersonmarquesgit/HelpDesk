@@ -154,7 +154,7 @@ public class TicketController {
 		User userRequest = userFromRequest(request);
 		if (userRequest.getProfile().equals(ProfileEnum.ROLE_TECHNICIAN)) {
 			tickets = this.ticketService.listTicket(page, count);
-		} else if (userRequest.getProfile().equals(ProfileEnum.ROLE_ADMIN)) {
+		} else if (userRequest.getProfile().equals(ProfileEnum.ROLE_CUSTOMER)) {
 			tickets = this.ticketService.findByCurrentUser(page, count, userRequest.getId());
 		} 
 		
