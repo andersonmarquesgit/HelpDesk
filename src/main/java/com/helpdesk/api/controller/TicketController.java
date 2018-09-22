@@ -173,6 +173,7 @@ public class TicketController {
 			@PathVariable("priority") String priority, 
 			@PathVariable("assigned") boolean assigned) {
 		
+		//Quando não se quiser informar um dos campos abaixo basta usar uninformed na url
 		title = title.equals("uninformed") ? "" : title;
 		status = status.equals("uninformed") ? "" : status;
 		priority = title.equals("uninformed") ? "" : priority;
